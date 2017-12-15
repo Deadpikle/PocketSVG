@@ -20,6 +20,9 @@ NS_ASSUME_NONNULL_BEGIN
 IB_DESIGNABLE
 @interface SVGImageView : PSVGView
 
+// Allows for setting the SVG via IB
+@property(nonatomic, copy) IBInspectable NSString *svgName;
+
 /*!
  * @brief Initialises a view that renders the provided SVG.
  * @param url The URL of the SVG file.
@@ -29,6 +32,7 @@ IB_DESIGNABLE
  */
 - (instancetype)initWithContentsOfURL:(NSURL *)url;
 
+- (void)setSvgName:(NSString *)svgName;
 
 /*!
  * @discussion The SVG paths the view should draw.

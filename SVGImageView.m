@@ -12,8 +12,6 @@
 #import "SVGBezierPath.h"
 
 @interface SVGImageView ()
-// Allows for setting the SVG via IB
-@property(nonatomic, copy) IBInspectable NSString *svgName;
 @end
 
 @implementation SVGImageView {
