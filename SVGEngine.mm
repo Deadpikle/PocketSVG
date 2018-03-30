@@ -38,6 +38,7 @@ protected:
 
     NSDictionary *readAttributes();
     float readFloatAttribute(NSString *aName);
+    bool hasAttribute(NSString * const aName);
     NSString *readStringAttribute(NSString *aName);
     
 private:
@@ -182,11 +183,19 @@ CF_RETURNS_RETAINED CGPathRef svgParser::readRectTag()
         readFloatAttribute(@"x"),     readFloatAttribute(@"y"),
         readFloatAttribute(@"width"), readFloatAttribute(@"height")
     };
+
     float rx = readFloatAttribute(@"rx");
     float ry = readFloatAttribute(@"ry");
-
+    
+    if (!hasAttribute(@"rx")) {
+        rx = ry;
+    }
+    if (!hasAttribute(@"ry")) {
+        ry = rx;
+    }
+    
     CGMutablePathRef rectPath = CGPathCreateMutable();
-    CGPathAddRoundedRect(rectPath, NULL, rect, rx, ry);
+    CGPathAddRoundedRect(rectPath, NULL, rect, MIN(rx, rect.size.width/2), MIN(ry, rect.size.height/2));
     return rectPath;
 }
 
@@ -250,8 +259,17 @@ CF_RETURNS_RETAINED CGPathRef svgParser::readEllipseTag()
     CGPoint const center = {
         readFloatAttribute(@"cx"), readFloatAttribute(@"cy")
     };
+    
     float rx = readFloatAttribute(@"rx");
     float ry = readFloatAttribute(@"ry");
+    
+    if (!hasAttribute(@"rx")) {
+        rx = ry;
+    }
+    if (!hasAttribute(@"ry")) {
+        ry = rx;
+    }
+
     CGMutablePathRef ellipse = CGPathCreateMutable();
     CGPathAddEllipseInRect(ellipse, NULL, CGRectMake(center.x - rx, center.y - ry, rx * 2.0, ry * 2.0));
     return ellipse;
@@ -322,7 +340,7 @@ NSDictionary *svgParser::readAttributes()
                 else if([transformCmd isEqualToString:@"skewY"])
                     additionalTransform.b = tanf(transformOperands[0] * M_PI / 180.0);
 
-                transform = CGAffineTransformConcat(transform, additionalTransform);
+                transform = CGAffineTransformConcat(additionalTransform, transform);
             }
             if(attrs[@"transform"] || !CGAffineTransformEqualToTransform(transform, CGAffineTransformIdentity))
                 attrs[@"transform"] = [NSValue svg_valueWithCGAffineTransform:transform];
@@ -361,6 +379,12 @@ float svgParser::readFloatAttribute(NSString * const aName)
 {
     xmlAutoFree char *value = (char *)xmlTextReaderGetAttribute(_xmlReader, (xmlChar*)[aName UTF8String]);
     return value ? strtof(value, NULL) : 0.0;
+}
+
+bool svgParser::hasAttribute(NSString * const aName)
+{
+    xmlAutoFree char *value = (char *)xmlTextReaderGetAttribute(_xmlReader, (xmlChar*)[aName UTF8String]);
+    return value != NULL;
 }
 
 NSString *svgParser::readStringAttribute(NSString * const aName)
@@ -794,6 +818,18 @@ void pathDefinitionParser::appendArc()
 
 hexTriplet::hexTriplet(NSString *str)
 {
+    static NSDictionary *colorMap = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSURL *url = [[NSBundle bundleForClass:[SVGAttributeSet class]] URLForResource:@"Colors" withExtension:@"plist"];
+        colorMap = [NSDictionary dictionaryWithContentsOfURL:url];
+    });
+    
+    NSString *mapped = colorMap[[str lowercaseString]];
+    if (mapped) {
+        str = mapped;
+    }
+    
     NSCParameterAssert([str hasPrefix:@"#"]);
     NSCParameterAssert([str length] == 4 || [str length] == 7);
     if([str length] == 4) {
