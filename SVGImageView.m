@@ -41,16 +41,16 @@
 - (instancetype)initWithFrame:(CGRect)frame
 {
     if ((self = [super initWithFrame:frame])) {
-        self.wantsLayer = YES;
         _svgLayer = [SVGLayer new];
+        self.wantsLayer = YES;
     }
     return self;
 }
 - (instancetype)initWithCoder:(NSCoder *)aDecoder
 {
     if ((self = [super initWithCoder:aDecoder])) {
-        self.wantsLayer = YES;
         _svgLayer = [SVGLayer new];
+        self.wantsLayer = YES;
     }
     return self;
 }
