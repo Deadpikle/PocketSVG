@@ -89,10 +89,8 @@
 - (void)setPaths:(NSArray<SVGBezierPath *> *)paths
 {
 #if defined(DEBUG) && !defined(POCKETSVG_DISABLE_FILEWATCH)
-    if(_fileWatcher) {
-        dispatch_source_cancel(_fileWatcher);
-        _fileWatcher = NULL;
-    }
+    if(_fileWatcher)
+    (void)((dispatch_source_cancel(_fileWatcher))), _fileWatcher = NULL;
 #endif
     _svgLayer.paths = paths;
 }
